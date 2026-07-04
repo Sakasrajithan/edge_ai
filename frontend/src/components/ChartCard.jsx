@@ -14,14 +14,17 @@ const ChartCard = ({ history = [], title = "Telemetry Historical Trends" }) => {
   const currentMetric = metricsConfig[activeMetric];
 
   // Format data for chart
-  const chartData = history.map(item => ({
-    ...item,
-    formattedTime: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    temperature: parseFloat(item.temperature.toFixed(2)),
-    vibration: parseFloat(item.vibration.toFixed(2)),
-    rpm: Math.round(item.rpm),
-    current: parseFloat(item.current.toFixed(2)),
-  }));
+  const chartData = (history || []).map(item => {
+    if (!item) return {};
+    return {
+      ...item,
+      formattedTime: item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '',
+      temperature: typeof item.temperature === 'number' ? parseFloat(item.temperature.toFixed(2)) : 0,
+      vibration: typeof item.vibration === 'number' ? parseFloat(item.vibration.toFixed(2)) : 0,
+      rpm: typeof item.rpm === 'number' ? Math.round(item.rpm) : 0,
+      current: typeof item.current === 'number' ? parseFloat(item.current.toFixed(2)) : 0,
+    };
+  });
 
   return (
     <div className="glass-card rounded-xl p-5 flex flex-col h-full min-h-[380px]">

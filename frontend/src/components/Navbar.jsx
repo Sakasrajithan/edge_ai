@@ -21,8 +21,8 @@ const Navbar = ({ machines = [] }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const criticalCount = machines.filter(m => m.status === 'Critical').length;
-  const warningCount = machines.filter(m => m.status === 'Warning').length;
+  const criticalCount = (machines || []).filter(m => m?.status === 'Critical').length;
+  const warningCount = (machines || []).filter(m => m?.status === 'Warning').length;
 
   return (
     <nav className="glass-panel border-b border-slate-200 h-16 px-6 flex items-center justify-between fixed top-0 left-0 right-0 z-50">

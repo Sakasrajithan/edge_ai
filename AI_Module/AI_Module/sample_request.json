@@ -1,8 +1,0 @@
-{
-  "Type": 1,
-  "Air_temperature_K": 298.2,
-  "Process_temperature_K": 308.7,
-  "Rotational_speed_rpm": 1500,
-  "Torque_Nm": 45,
-  "Tool_wear_min": 50
-}

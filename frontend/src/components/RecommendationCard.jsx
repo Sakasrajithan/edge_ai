@@ -20,8 +20,8 @@ const RecommendationCard = ({ prediction, recommendation, status }) => {
 
           <div className="space-y-2">
             <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Detected Condition</span>
-            <h4 className="text-base font-bold text-slate-900">{prediction}</h4>
-            <p className="text-sm text-slate-600 leading-relaxed mt-2">{recommendation}</p>
+            <h4 className="text-base font-bold text-slate-900">{prediction || 'Normal'}</h4>
+            <p className="text-sm text-slate-600 leading-relaxed mt-2">{recommendation || 'All parameters operating within limits.'}</p>
           </div>
         </div>
       </div>

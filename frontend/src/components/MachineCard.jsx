@@ -4,7 +4,16 @@ import { Thermometer, Activity, Gauge, Zap, ChevronRight } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
 const MachineCard = ({ machine }) => {
-  const { machineId, machineName, temperature, vibration, rpm, current, status } = machine;
+  if (!machine) return null;
+  const { 
+    machineId = 'N/A', 
+    machineName = 'Unknown Node', 
+    temperature = 0, 
+    vibration = 0, 
+    rpm = 0, 
+    current = 0, 
+    status = 'Healthy' 
+  } = machine;
 
   const metrics = [
     { label: 'Temperature', value: `${temperature} °C`, icon: Thermometer, color: 'text-orange-600' },

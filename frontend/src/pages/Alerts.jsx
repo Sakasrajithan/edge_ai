@@ -16,11 +16,17 @@ const Alerts = () => {
       try {
         const res = await API.get('/prediction?limit=100');
         // Filter out predictions that are 'Normal'
-        const abnormalPredictions = res.data.data.filter(p => p.prediction !== 'Normal');
+        const abnormalPredictions = (res.data?.data || []).filter(p => p && p.prediction !== 'Normal');
         setPredictions(abnormalPredictions);
         setError(null);
       } catch (err) {
-        console.error('Error fetching prediction logs:', err);
+        console.error(err);
+        if (err.message) console.error(err.message);
+        if (err.response) {
+          console.error(err.response);
+          console.error(err.response.status);
+          console.error(err.response.data);
+        }
         setError('Connection to edge data logs lost.');
       } finally {
         setLoading(false);
@@ -29,10 +35,12 @@ const Alerts = () => {
 
     fetchPredictions();
     const interval = setInterval(fetchPredictions, 6000); // Poll every 6s
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
-  if (loading && predictions.length === 0) {
+  if (loading && (!predictions || predictions.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
@@ -42,14 +50,15 @@ const Alerts = () => {
   }
 
   // Filter logic
-  const filteredPredictions = predictions.filter((p) => {
-    const isCritical = p.health < 60;
+  const filteredPredictions = (predictions || []).filter((p) => {
+    if (!p) return false;
+    const isCritical = (p.health || 0) < 60;
     const alertStatus = isCritical ? 'Critical' : 'Warning';
 
     const matchesSearch = 
-      p.machineId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.prediction.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.recommendation.toLowerCase().includes(searchTerm.toLowerCase());
+      (p.machineId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.prediction || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.recommendation || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = 
       statusFilter === 'All' || 
@@ -157,14 +166,15 @@ const Alerts = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
                 {filteredPredictions.map((log) => {
-                  const isCritical = log.health < 60;
+                  if (!log) return null;
+                  const isCritical = (log.health || 0) < 60;
                   const severityStyles = isCritical 
                     ? 'bg-rose-50 text-rose-600 border-rose-200' 
                     : 'bg-amber-50 text-amber-600 border-amber-200';
                   
                   return (
                     <tr 
-                      key={log._id} 
+                      key={log._id || Math.random()} 
                       className={`hover:bg-slate-50/50 transition-all border-b border-slate-100 ${
                         isCritical ? 'hover:bg-rose-50/30' : 'hover:bg-amber-50/30'
                       }`}
@@ -178,31 +188,31 @@ const Alerts = () => {
 
                       {/* Machine ID */}
                       <td className="p-4 font-bold text-slate-800 font-mono">
-                        {log.machineId}
+                        {log.machineId || 'N/A'}
                       </td>
 
                       {/* Prediction Description */}
                       <td className="p-4">
                         <div>
-                          <p className="font-bold text-slate-900">{log.prediction}</p>
-                          <span className="text-[10px] text-slate-400 font-mono">HEALTH: {log.health}%</span>
+                          <p className="font-bold text-slate-900">{log.prediction || 'Unknown'}</p>
+                          <span className="text-[10px] text-slate-400 font-mono">HEALTH: {log.health || 0}%</span>
                         </div>
                       </td>
 
                       {/* Recommendations */}
                       <td className="p-4 text-slate-600 max-w-xs md:max-w-md truncate">
-                        {log.recommendation}
+                        {log.recommendation || 'No recommendation'}
                       </td>
 
                       {/* Timestamp */}
                       <td className="p-4 text-slate-400 font-mono">
-                        {new Date(log.timestamp).toLocaleString()}
+                        {log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A'}
                       </td>
 
                       {/* Actions */}
                       <td className="p-4 text-right">
                         <Link 
-                          to={`/machine?id=${log.machineId}`}
+                          to={`/machine?id=${log.machineId || ''}`}
                           className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-semibold font-mono group"
                         >
                           DIAGNOSTICS

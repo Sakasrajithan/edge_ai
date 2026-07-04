@@ -1,4 +1,4 @@
-BACKEND_URL = "http://localhost:5000/sensor"
+BACKEND_URL = "http://localhost:3001/sensor"
 
 MACHINES = [
     "M001", "M002", "M003", "M004", "M005",

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 const AlertCard = ({ alerts = [], title = "System Alerts Feed", limit = 5 }) => {
-  const displayAlerts = alerts.slice(0, limit);
+  const displayAlerts = (alerts || []).slice(0, limit);
 
   return (
     <div className="glass-card rounded-xl p-5 flex flex-col h-full">
@@ -23,7 +23,8 @@ const AlertCard = ({ alerts = [], title = "System Alerts Feed", limit = 5 }) => 
           </div>
         ) : (
           displayAlerts.map((alert, idx) => {
-            const isCritical = alert.health < 60; // or status === 'Critical'
+            if (!alert) return null;
+            const isCritical = (alert.health || 0) < 60; // or status === 'Critical'
             const Icon = isCritical ? AlertCircle : AlertTriangle;
             const iconColor = isCritical ? 'text-rose-500' : 'text-amber-500';
             const bgHoverClass = isCritical ? 'hover:bg-rose-50' : 'hover:bg-amber-50';
@@ -39,13 +40,13 @@ const AlertCard = ({ alerts = [], title = "System Alerts Feed", limit = 5 }) => 
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-800">{alert.machineId}</span>
+                      <span className="text-xs font-bold text-slate-800">{alert.machineId || 'Unknown Node'}</span>
                       <span className="text-[9px] font-mono text-slate-400">
-                        {new Date(alert.timestamp).toLocaleTimeString()}
+                        {alert.timestamp ? new Date(alert.timestamp).toLocaleTimeString() : 'N/A'}
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 font-medium mt-0.5 line-clamp-1">
-                      {alert.prediction} - Health: <span className="font-bold text-slate-800">{alert.health}%</span>
+                      {alert.prediction || 'Normal'} - Health: <span className="font-bold text-slate-800">{alert.health || 0}%</span>
                     </p>
                   </div>
                 </div>
@@ -59,7 +60,7 @@ const AlertCard = ({ alerts = [], title = "System Alerts Feed", limit = 5 }) => 
                     {isCritical ? 'Critical' : 'Warning'}
                   </span>
                   <Link 
-                    to={`/machine?id=${alert.machineId}`}
+                    to={`/machine?id=${alert.machineId || ''}`}
                     className="text-[10px] text-blue-600 hover:text-blue-700 underline font-medium"
                   >
                     Diagnostics

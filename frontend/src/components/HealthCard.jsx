@@ -1,21 +1,22 @@
 import React from 'react';
 
 const HealthCard = ({ health, status }) => {
+  const safeHealth = typeof health === 'number' ? health : 0;
   const radius = 50;
   const stroke = 8;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (health / 100) * circumference;
+  const strokeDashoffset = circumference - (safeHealth / 100) * circumference;
 
   const getColorClass = () => {
-    if (health >= 85) return 'text-emerald-500 stroke-emerald-500';
-    if (health >= 70) return 'text-amber-500 stroke-amber-500';
+    if (safeHealth >= 85) return 'text-emerald-500 stroke-emerald-500';
+    if (safeHealth >= 70) return 'text-amber-500 stroke-amber-500';
     return 'text-rose-500 stroke-rose-500';
   };
 
   const getBgColorClass = () => {
-    if (health >= 85) return 'bg-emerald-50 border-emerald-200 text-emerald-700';
-    if (health >= 70) return 'bg-amber-50 border-amber-200 text-amber-700';
+    if (safeHealth >= 85) return 'bg-emerald-50 border-emerald-200 text-emerald-700';
+    if (safeHealth >= 70) return 'bg-amber-50 border-amber-200 text-amber-700';
     return 'bg-rose-50 border-rose-200 text-rose-700';
   };
 
@@ -55,7 +56,7 @@ const HealthCard = ({ health, status }) => {
 
         {/* Central percentage text */}
         <div className="absolute text-2xl font-bold font-mono text-slate-900 flex flex-col items-center">
-          <span>{health}%</span>
+          <span>{safeHealth}%</span>
           <span className="text-[9px] uppercase tracking-widest text-slate-400">Health</span>
         </div>
       </div>

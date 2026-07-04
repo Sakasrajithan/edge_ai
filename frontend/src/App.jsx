@@ -47,15 +47,23 @@ function App() {
     const fetchMachines = async () => {
       try {
         const res = await API.get('/machine');
-        setMachines(res.data.data);
+        setMachines(res.data?.data || []);
       } catch (err) {
-        console.error('Error in App level polling:', err);
+        console.error(err);
+        if (err.message) console.error(err.message);
+        if (err.response) {
+          console.error(err.response);
+          console.error(err.response.status);
+          console.error(err.response.data);
+        }
       }
     };
 
     fetchMachines();
-    const interval = setInterval(fetchMachines, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchMachines, 3001);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   return (

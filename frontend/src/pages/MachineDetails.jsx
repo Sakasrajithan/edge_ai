@@ -23,7 +23,7 @@ const MachineDetails = () => {
     const fetchMachines = async () => {
       try {
         const res = await API.get('/machine');
-        const machineList = res.data.data;
+        const machineList = res.data?.data || [];
         setMachines(machineList);
 
         // If no activeMachineId in URL, select the first machine
@@ -32,7 +32,13 @@ const MachineDetails = () => {
         }
         setError(null);
       } catch (err) {
-        console.error('Error fetching machines list:', err);
+        console.error(err);
+        if (err.message) console.error(err.message);
+        if (err.response) {
+          console.error(err.response);
+          console.error(err.response.status);
+          console.error(err.response.data);
+        }
         setError('Failed to fetch machines.');
       }
     };
@@ -50,10 +56,10 @@ const MachineDetails = () => {
           API.get(`/prediction?machineId=${activeMachineId}&limit=1`)
         ]);
 
-        setSelectedMachine(machineRes.data.data);
+        setSelectedMachine(machineRes.data?.data || null);
         
         // If we have a prediction, set it. If not, create a fallback healthy prediction.
-        if (predictionRes.data.data && predictionRes.data.data.length > 0) {
+        if (predictionRes.data?.data && predictionRes.data.data.length > 0) {
           setLatestPrediction(predictionRes.data.data[0]);
         } else {
           setLatestPrediction({
@@ -65,7 +71,13 @@ const MachineDetails = () => {
         }
         setError(null);
       } catch (err) {
-        console.error(`Error fetching diagnostics for ${activeMachineId}:`, err);
+        console.error(err);
+        if (err.message) console.error(err.message);
+        if (err.response) {
+          console.error(err.response);
+          console.error(err.response.status);
+          console.error(err.response.data);
+        }
         setError(`Failed to fetch live diagnostics for ${activeMachineId}`);
       } finally {
         setLoading(false);
@@ -74,14 +86,16 @@ const MachineDetails = () => {
 
     fetchDiagnostics();
     const interval = setInterval(fetchDiagnostics, 4000); // poll every 4s for real-time charts/metrics
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [activeMachineId]);
 
   const selectMachineId = (id) => {
     setSearchParams({ id });
   };
 
-  if (loading && machines.length === 0) {
+  if (loading && (!machines || machines.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
@@ -115,25 +129,27 @@ const MachineDetails = () => {
             Machinery Node List
           </h3>
           <div className="space-y-2">
-            {machines.map((m) => (
-              <button
-                key={m.machineId}
-                onClick={() => selectMachineId(m.machineId)}
-                className={`w-full flex justify-between items-center p-3 rounded-lg border text-left transition-all ${
-                  activeMachineId === m.machineId
-                    ? 'bg-blue-600/10 border-blue-600/20 text-blue-600'
-                    : 'bg-slate-50 border-slate-205 text-slate-500 hover:text-slate-800 hover:border-slate-350'
-                }`}
-              >
-                <div>
-                  <span className="text-[10px] font-mono block opacity-80">{m.machineId}</span>
-                  <span className="text-xs font-bold font-mono tracking-wide line-clamp-1">{m.machineName}</span>
-                </div>
-                <span className={`w-2 h-2 rounded-full ${
-                  m.status === 'Healthy' ? 'bg-emerald-500' :
-                  m.status === 'Warning' ? 'bg-amber-500' : 'bg-rose-500'
-                } animate-pulse`} />
-              </button>
+            {(machines || []).map((m) => (
+              m && (
+                <button
+                  key={m.machineId}
+                  onClick={() => selectMachineId(m.machineId)}
+                  className={`w-full flex justify-between items-center p-3 rounded-lg border text-left transition-all ${
+                    activeMachineId === m.machineId
+                      ? 'bg-blue-600/10 border-blue-600/20 text-blue-600'
+                      : 'bg-slate-50 border-slate-205 text-slate-500 hover:text-slate-800 hover:border-slate-350'
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-mono block opacity-80">{m.machineId}</span>
+                    <span className="text-xs font-bold font-mono tracking-wide line-clamp-1">{m.machineName}</span>
+                  </div>
+                  <span className={`w-2 h-2 rounded-full ${
+                    m.status === 'Healthy' ? 'bg-emerald-500' :
+                    m.status === 'Warning' ? 'bg-amber-500' : 'bg-rose-500'
+                  } animate-pulse`} />
+                </button>
+              )
             ))}
           </div>
         </div>
@@ -158,7 +174,7 @@ const MachineDetails = () => {
                 <div className="flex items-center gap-4 text-xs text-slate-550 font-mono mt-1">
                   <span className="flex items-center gap-1 text-slate-400">
                     <Calendar className="w-3.5 h-3.5" />
-                    Last Updated: {new Date(selectedMachine.updatedAt).toLocaleTimeString()}
+                    Last Updated: {selectedMachine.updatedAt ? new Date(selectedMachine.updatedAt).toLocaleTimeString() : 'N/A'}
                   </span>
                   <span className="flex items-center gap-1 text-slate-400">
                     <HardDrive className="w-3.5 h-3.5" />
@@ -222,7 +238,7 @@ const MachineDetails = () => {
             {/* History Chart */}
             <div className="w-full">
               <ChartCard 
-                history={selectedMachine.history} 
+                history={selectedMachine.history || []} 
                 title={`${selectedMachine.machineName} Diagnostics Timeline`} 
               />
             </div>

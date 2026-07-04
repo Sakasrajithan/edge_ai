@@ -14,29 +14,48 @@ const Dashboard = () => {
   // Poll data
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [machinesRes, predictionsRes] = await Promise.all([
-          API.get('/machine'),
-          API.get('/prediction?limit=10')
-        ]);
-        
-        setMachines(machinesRes.data.data);
-        setPredictions(predictionsRes.data.data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Connection lost. Reconnecting to SentinelEdge Node...');
-      } finally {
-        setLoading(false);
-      }
+      const machinesPromise = API.get('/machine')
+        .then((res) => {
+          setMachines(res.data?.data || []);
+          setError(null);
+        })
+        .catch((err) => {
+          console.error(err);
+          if (err.message) console.error(err.message);
+          if (err.response) {
+            console.error(err.response);
+            console.error(err.response.status);
+            console.error(err.response.data);
+          }
+          setError('Failed to fetch machine telemetries. Reconnecting to SentinelEdge Node...');
+        });
+
+      const predictionsPromise = API.get('/prediction?limit=10')
+        .then((res) => {
+          setPredictions(res.data?.data || []);
+        })
+        .catch((err) => {
+          console.error(err);
+          if (err.message) console.error(err.message);
+          if (err.response) {
+            console.error(err.response);
+            console.error(err.response.status);
+            console.error(err.response.data);
+          }
+        });
+
+      await Promise.allSettled([machinesPromise, predictionsPromise]);
+      setLoading(false);
     };
 
     fetchData();
     const interval = setInterval(fetchData, 4000); // Poll every 4 seconds
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
-  if (loading && machines.length === 0) {
+  if (loading && (!machines || machines.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
@@ -46,17 +65,19 @@ const Dashboard = () => {
   }
 
   // Calculate summary metrics
-  const totalMachines = machines.length;
-  const criticalCount = machines.filter(m => m.status === 'Critical').length;
-  const warningCount = machines.filter(m => m.status === 'Warning').length;
+  const totalMachines = (machines || []).length;
+  const criticalCount = (machines || []).filter(m => m?.status === 'Critical').length;
+  const warningCount = (machines || []).filter(m => m?.status === 'Warning').length;
   
   // Estimate overall health based on latest machine predictions
   // If we don't have predictions, use 100%. Otherwise, average the health values of all active machines.
   // We can find the latest prediction health for each unique machine.
   const machineHealthMap = {};
-  predictions.forEach(p => {
-    if (!machineHealthMap[p.machineId]) {
-      machineHealthMap[p.machineId] = p.health;
+  (predictions || []).forEach(p => {
+    if (p && p.machineId) {
+      if (!machineHealthMap[p.machineId]) {
+        machineHealthMap[p.machineId] = p.health;
+      }
     }
   });
 
